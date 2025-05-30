@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌱 Plant Evolution RPG</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            color: #2E7D32;
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        #player-info {
+            display: flex;
+            gap: 1.5rem;
+            font-weight: 600;
+        }
+
+        #player-info span {
+            background: #E8F5E8;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            border: 2px solid #4CAF50;
+        }
+
+        main {
+            display: flex;
+            flex: 1;
+            padding: 1.5rem;
+            gap: 1.5rem;
+        }
+
+        #game-canvas {
+            background: linear-gradient(45deg, #E8F5E8 0%, #F1F8E9 100%);
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            border: 3px solid #4CAF50;
+            cursor: crosshair;
+        }
+
+        #ui-panel {
+            width: 320px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        #ui-panel h3 {
+            color: #2E7D32;
+            margin-bottom: 0.8rem;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 0.5rem;
+        }
+
+        #actions button {
+            width: 100%;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(45deg, #4CAF50 0%, #66BB6A 100%);
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        #actions button:hover {
+            background: linear-gradient(45deg, #45a049 0%, #5cb85c 100%);
+            transform: translateY(-2px);
+        }
+
+        #plant-list, #friends-list, #garden-stats {
+            max-height: 180px;
+            overflow-y: auto;
+            border: 2px solid #E0E0E0;
+            border-radius: 10px;
+            padding: 1rem;
+            background: #FAFAFA;
+        }
+
+        .plant-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem;
+            margin: 0.5rem 0;
+            background: linear-gradient(45deg, #F1F8E9 0%, #E8F5E8 100%);
+            border-radius: 10px;
+            border-left: 5px solid #4CAF50;
+            transition: transform 0.2s ease;
+        }
+
+        .plant-item:hover {
+            transform: translateX(5px);
+        }
+
+        .plant-rarity {
+            font-size: 0.8rem;
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .common { background: #81C784; color: white; }
+        .uncommon { background: #42A5F5; color: white; }
+        .rare { background: #AB47BC; color: white; }
+        .epic { background: #FF7043; color: white; }
+        .legendary { background: #FFD700; color: #333; }
+
+        .friend-online {
+            color: #4CAF50;
+            font-weight: bold;
+            padding: 0.5rem;
+            background: #E8F5E8;
+            border-radius: 8px;
+            margin: 0.3rem 0;
+        }
+
+        footer {
+            background: rgba(255, 255, 255, 0.9);
+            text-align: center;
+            padding: 1rem;
+            font-weight: 500;
+            color: #2E7D32;
+        }
+
+        @media (max-width: 768px) {
+            main {
+                flex-direction: column;
+            }
+            
+            #ui-panel {
+                width: 100%;
+            }
+            
+            #game-canvas {
+                width: 100%;
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <header>
+            <h1>🌱 Plant Evolution RPG</h1>
+            <div id="player-info">
+                <span id="player-name">Loading...</span>
+                <span id="plant-count">Plants: 0</span>
+                <span id="online-count">Online: 1</span>
+            </div>
+        </header>
+        
+        <main>
+            <canvas id="game-canvas" width="800" height="600"></canvas>
+            
+            <div id="ui-panel">
+                <div id="inventory">
+                    <h3>My Garden 🪴</h3>
+                    <div id="plant-list">
+                        <p>Click "Explore" to find your first plant!</p>
+                    </div>
+                </div>
+                
+                <div id="actions">
+                    <button id="explore-btn">🔍 Explore for Plants</button>
+                    <button id="care-btn">💧 Care for Plants</button>
+                    <button id="evolve-btn">🌿 Check Evolution</button>
+                    <button id="trade-btn">🤝 Coming Soon!</button>
+                </div>
+                
+                <div id="multiplayer">
+                    <h3>Gardeners Online 👥</h3>
+                    <div id="friends-list">
+                        <div class="friend-online">🟢 You</div>
+                        <div class="friend-online">🟢 GreenThumb22</div>
+                        <div class="friend-online">🟢 PlantMaster</div>
+                    </div>
+                </div>
+                
+                <div id="stats">
+                    <h3>Garden Stats 📊</h3>
+                    <div id="garden-stats">
+                        <p>🌱 Total Plants: <span id="total-plants">0</span></p>
+                        <p>🏆 Rare Plants: <span id="rare-plants">0</span></p>
+                        <p>⭐ Evolution Points: <span id="evo-points">0</span></p>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <footer>
+            <p>🌿 Made with love by mbrownm | Free forever! 🌿</p>
+        </footer>
+    </div>
+    
+    <script>
+        class PlantEvolutionRPG {
+            constructor() {
+                this.canvas = document.getElementById('game-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.player = {
+                    name: '',
+                    plants: [],
+                    evolutionPoints: 0,
+                    totalPlants: 0,
+                    rarePlants: 0
+                };
+                this.lastExploreTime = 0;
+                this.exploreDelay = 3000; // 3 seconds between explores
+                
+                this.plantTypes = [
+                    { name: '🌱 Tiny Sprout', rarity: 'common', stage: 0, evolveTime: 30000, evolvesTo: '🌿 Green Herb' },
+                    { name: '🌿 Green Herb', rarity: 'common', stage: 1, evolveTime: 60000, evolvesTo: '🌺 Pink Bloom' },
+                    { name: '🌺 Pink Bloom', rarity: 'uncommon', stage: 2, evolveTime: 120000, evolvesTo: '🌸 Cherry Blossom' },
+                    { name: '🌵 Desert Spike', rarity: 'rare', stage: 1, evolveTime: 180000, evolvesTo: '🌴 Palm Tree' },
+                    { name: '🌳 Oak Sapling', rarity: 'rare', stage: 1, evolveTime: 240000, evolvesTo: '🌲 Mighty Oak' },
+                    { name: '🌸 Cherry Blossom', rarity: 'epic', stage: 3, evolveTime: 300000, evolvesTo: '🌈 Rainbow Tree' },
+                    { name: '🌴 Palm Tree', rarity: 'epic', stage: 2, evolveTime: 360000, evolvesTo: '🎋 Bamboo](#)*
+
