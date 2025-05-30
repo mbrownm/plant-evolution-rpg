@@ -252,5 +252,417 @@
                     { name: '🌵 Desert Spike', rarity: 'rare', stage: 1, evolveTime: 180000, evolvesTo: '🌴 Palm Tree' },
                     { name: '🌳 Oak Sapling', rarity: 'rare', stage: 1, evolveTime: 240000, evolvesTo: '🌲 Mighty Oak' },
                     { name: '🌸 Cherry Blossom', rarity: 'epic', stage: 3, evolveTime: 300000, evolvesTo: '🌈 Rainbow Tree' },
-                    { name: '🌴 Palm Tree', rarity: 'epic', stage: 2, evolveTime: 360000, evolvesTo: '🎋 Bamboo](#)*
-
+                    { name: '🌴 Palm Tree', rarity: 'epic', stage: 2, evolveTime: 360000, evolvesTo: '🎋 Bamboo Forest' },
+                    { name: '🌲 Mighty Oak', rarity: 'epic', stage: 2, evolveTime: 420000, evolvesTo: '🎄 Ancient Pine' },
+                    { name: '🌈 Rainbow Tree', rarity: 'legendary', stage: 4, evolveTime: 600000, evolvesTo: null },
+                    { name: '🎋 Bamboo Forest', rarity: 'legendary', stage: 3, evolveTime: 600000, evolvesTo: null },
+                    { name: '🎄 Ancient Pine', rarity: 'legendary', stage: 3, evolveTime: 600000, evolvesTo: null }
+                ];
+                
+                this.init();
+            }
+            
+            init() {
+                this.setupEventListeners();
+                this.gameLoop();
+                
+                // Get player name
+                this.player.name = this.getPlayerName();
+                document.getElementById('player-name').textContent = this.player.name;
+                
+                // Load saved game data
+                this.loadGameData();
+                
+                console.log('🌱 Plant Evolution RPG Started!');
+                this.showWelcomeMessage();
+            }
+            
+            getPlayerName() {
+                let savedName = localStorage.getItem('plant-rpg-player-name');
+                if (!savedName) {
+                    savedName = prompt('🌱 Welcome to Plant Evolution RPG! Enter your gardener name:') || 'Anonymous Gardener';
+                    localStorage.setItem('plant-rpg-player-name', savedName);
+                }
+                return savedName;
+            }
+            
+            setupEventListeners() {
+                document.getElementById('explore-btn').addEventListener('click', () => {
+                    this.explorePlants();
+                });
+                
+                document.getElementById('care-btn').addEventListener('click', () => {
+                    this.carePlants();
+                });
+                
+                document.getElementById('evolve-btn').addEventListener('click', () => {
+                    this.checkEvolutions();
+                });
+                
+                document.getElementById('trade-btn').addEventListener('click', () => {
+                    alert('🤝 Trading system coming soon! For now, share screenshots of your rare plants!');
+                });
+                
+                // Canvas click for plant interaction
+                this.canvas.addEventListener('click', (e) => {
+                    this.handleCanvasClick(e);
+                });
+            }
+            
+            explorePlants() {
+                const now = Date.now();
+                if (now - this.lastExploreTime < this.exploreDelay) {
+                    const remaining = Math.ceil((this.exploreDelay - (now - this.lastExploreTime)) / 1000);
+                    alert(`🕐 Please wait ${remaining} more seconds before exploring again!`);
+                    return;
+                }
+                
+                this.lastExploreTime = now;
+                
+                // Exploration mechanics with rarity chances
+                const chance = Math.random();
+                let found = null;
+                
+                if (chance < 0.5) { // 50% chance common
+                    const commonPlants = this.plantTypes.filter(p => p.rarity === 'common' && p.stage === 0);
+                    found = commonPlants[Math.floor(Math.random() * commonPlants.length)];
+                } else if (chance < 0.75) { // 25% chance uncommon
+                    const uncommonPlants = this.plantTypes.filter(p => p.rarity === 'uncommon');
+                    found = uncommonPlants[Math.floor(Math.random() * uncommonPlants.length)];
+                } else if (chance < 0.90) { // 15% chance rare
+                    const rarePlants = this.plantTypes.filter(p => p.rarity === 'rare');
+                    found = rarePlants[Math.floor(Math.random() * rarePlants.length)];
+                } else if (chance < 0.98) { // 8% chance epic
+                    const epicPlants = this.plantTypes.filter(p => p.rarity === 'epic');
+                    found = epicPlants[Math.floor(Math.random() * epicPlants.length)];
+                } else { // 2% chance legendary
+                    const legendaryPlants = this.plantTypes.filter(p => p.rarity === 'legendary');
+                    found = legendaryPlants[Math.floor(Math.random() * legendaryPlants.length)];
+                }
+                
+                if (found) {
+                    const newPlant = {
+                        ...found,
+                        id: Date.now() + Math.random(),
+                        health: 100,
+                        lastCared: Date.now(),
+                        foundTime: Date.now(),
+                        careCount: 0
+                    };
+                    
+                    this.addPlant(newPlant);
+                    this.showDiscoveryMessage(newPlant);
+                }
+                
+                this.saveGameData();
+            }
+            
+            addPlant(plant) {
+                this.player.plants.push(plant);
+                this.player.totalPlants++;
+                if (['rare', 'epic', 'legendary'].includes(plant.rarity)) {
+                    this.player.rarePlants++;
+                }
+                this.player.evolutionPoints += this.getRarityPoints(plant.rarity);
+                this.updateUI();
+            }
+            
+            getRarityPoints(rarity) {
+                const points = {
+                    common: 1,
+                    uncommon: 3,
+                    rare: 10,
+                    epic: 25,
+                    legendary: 100
+                };
+                return points[rarity] || 1;
+            }
+            
+            carePlants() {
+                if (this.player.plants.length === 0) {
+                    alert('🌱 You need to find some plants first! Click "Explore" to discover plants.');
+                    return;
+                }
+                
+                let careCount = 0;
+                this.player.plants.forEach(plant => {
+                    plant.health = Math.min(100, plant.health + 15);
+                    plant.lastCared = Date.now();
+                    plant.careCount = (plant.careCount || 0) + 1;
+                    careCount++;
+                });
+                
+                this.player.evolutionPoints += careCount;
+                alert(`🌱 Cared for ${careCount} plants! +${careCount} evolution points`);
+                this.updateUI();
+                this.saveGameData();
+            }
+            
+            checkEvolutions() {
+                if (this.player.plants.length === 0) {
+                    alert('🌱 You need plants to evolve! Go explore to find some.');
+                    return;
+                }
+                
+                let evolutionCount = 0;
+                const now = Date.now();
+                
+                this.player.plants.forEach((plant, index) => {
+                    if (plant.evolvesTo && !plant.evolved) {
+                        const timeSinceFound = now - plant.foundTime;
+                        const careBonus = (plant.careCount || 0) * 10000; // 10 seconds off per care
+                        const adjustedEvolveTime = Math.max(10000, plant.evolveTime - careBonus);
+                        
+                        if (timeSinceFound >= adjustedEvolveTime && plant.health >= 80) {
+                            // Evolve the plant!
+                            const evolvedType = this.plantTypes.find(p => p.name === plant.evolvesTo);
+                            if (evolvedType) {
+                                this.player.plants[index] = {
+                                    ...evolvedType,
+                                    id: plant.id,
+                                    health: 100,
+                                    lastCared: Date.now(),
+                                    foundTime: Date.now(),
+                                    careCount: plant.careCount || 0,
+                                    evolved: true
+                                };
+                                evolutionCount++;
+                                this.player.evolutionPoints += this.getRarityPoints(evolvedType.rarity);
+                            }
+                        }
+                    }
+                });
+                
+                if (evolutionCount > 0) {
+                    alert(`🎉 ${evolutionCount} plant(s) evolved! Check your garden!`);
+                    this.updateUI();
+                    this.saveGameData();
+                } else {
+                    alert('⏰ No plants ready to evolve yet. Keep caring for them and wait for them to grow!');
+                }
+            }
+            
+            showDiscoveryMessage(plant) {
+                const messages = [
+                    `🎉 You found a ${plant.name}!`,
+                    `✨ A wild ${plant.name} appeared!`,
+                    `🌟 Discovery! ${plant.name} joined your garden!`,
+                    `🎊 Amazing! You discovered ${plant.name}!`
+                ];
+                
+                const message = messages[Math.floor(Math.random() * messages.length)];
+                alert(message + ` (${plant.rarity.toUpperCase()})`);
+            }
+            
+            showWelcomeMessage() {
+                if (!localStorage.getItem('plant-rpg-welcomed')) {
+                    alert('🌱 Welcome to Plant Evolution RPG!\n\n🔍 Click "Explore" to find plants\n💧 "Care" keeps them healthy\n🌿 "Check Evolution" to evolve them\n\nHappy gardening! 🌸');
+                    localStorage.setItem('plant-rpg-welcomed', 'true');
+                }
+            }
+            
+            updateUI() {
+                // Update plant count
+                document.getElementById('plant-count').textContent = `Plants: ${this.player.plants.length}`;
+                
+                // Update plant list
+                this.updatePlantsList();
+                
+                // Update stats
+                document.getElementById('total-plants').textContent = this.player.totalPlants;
+                document.getElementById('rare-plants').textContent = this.player.rarePlants;
+                document.getElementById('evo-points').textContent = this.player.evolutionPoints;
+            }
+            
+            updatePlantsList() {
+                const plantList = document.getElementById('plant-list');
+                plantList.innerHTML = '';
+                
+                if (this.player.plants.length === 0) {
+                    plantList.innerHTML = '<p>Click "Explore" to find your first plant!</p>';
+                    return;
+                }
+                
+                this.player.plants.forEach((plant, index) => {
+                    const plantDiv = document.createElement('div');
+                    plantDiv.className = 'plant-item';
+                    
+                    const healthBar = plant.health >= 80 ? '💚' : plant.health >= 50 ? '💛' : '❤️';
+                    const evolveStatus = plant.evolvesTo ? '🌿' : '⭐';
+                    
+                    plantDiv.innerHTML = `
+                        <div>
+                            <strong>${plant.name}</strong>
+                            <br><small>${healthBar} ${Math.round(plant.health)}% • Stage ${plant.stage}</small>
+                        </div>
+                        <div>
+                            <span class="plant-rarity ${plant.rarity}">${plant.rarity}</span>
+                            <span style="margin-left: 5px;">${evolveStatus}</span>
+                        </div>
+                    `;
+                    plantList.appendChild(plantDiv);
+                });
+            }
+            
+            handleCanvasClick(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                // Check if clicked on a plant
+                this.player.plants.forEach((plant, index) => {
+                    const plantX = 100 + (index % 6) * 120;
+                    const plantY = 100 + Math.floor(index / 6) * 120;
+                    
+                    if (x >= plantX - 30 && x <= plantX + 30 && y >= plantY - 30 && y <= plantY + 30) {
+                        this.showPlantDetails(plant);
+                    }
+                });
+            }
+            
+            showPlantDetails(plant) {
+                const age = Math.floor((Date.now() - plant.foundTime) / 1000 / 60); // minutes
+                const careBonus = (plant.careCount || 0) * 10;
+                const evolveTime = plant.evolveTime ? Math.floor(plant.evolveTime / 1000 / 60) : 0;
+                
+                let details = `🌱 ${plant.name}\n`;
+                details += `🏆 Rarity: ${plant.rarity.toUpperCase()}\n`;
+                details += `💚 Health: ${Math.round(plant.health)}%\n`;
+                details += `⏰ Age: ${age} minutes\n`;
+                details += `💧 Times cared for: ${plant.careCount || 0}\n`;
+                
+                if (plant.evolvesTo) {
+                    const timeNeeded = Math.max(0, evolveTime - age - careBonus);
+                    details += `\n🌿 Evolves to: ${plant.evolvesTo}\n`;
+                    details += `⏳ Time needed: ${timeNeeded} minutes\n`;
+                    details += `📋 Needs: 80% health + time`;
+                } else {
+                    details += `\n⭐ This plant is fully evolved!`;
+                }
+                
+                alert(details);
+            }
+            
+            saveGameData() {
+                const gameData = {
+                    player: this.player,
+                    lastSave: Date.now()
+                };
+                localStorage.setItem('plant-rpg-save', JSON.stringify(gameData));
+            }
+            
+            loadGameData() {
+                const saved = localStorage.getItem('plant-rpg-save');
+                if (saved) {
+                    try {
+                        const gameData = JSON.parse(saved);
+                        this.player = { ...this.player, ...gameData.player };
+                        this.updateUI();
+                        console.log('🌱 Game data loaded!');
+                    } catch (e) {
+                        console.log('🌱 Starting fresh game!');
+                    }
+                }
+            }
+            
+            gameLoop() {
+                this.draw();
+                requestAnimationFrame(() => this.gameLoop());
+            }
+            
+            draw() {
+                // Clear canvas with gradient background
+                const gradient = this.ctx.createLinearGradient(0, 0, this.canvas.width, this.canvas.height);
+                gradient.addColorStop(0, '#E8F5E8');
+                gradient.addColorStop(1, '#F1F8E9');
+                this.ctx.fillStyle = gradient;
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw garden grid
+                this.drawGarden();
+                
+                // Draw plants
+                this.drawPlants();
+                
+                // Draw UI elements
+                this.drawCanvasUI();
+            }
+            
+            drawGarden() {
+                // Garden plot lines
+                this.ctx.strokeStyle = 'rgba(76, 175, 80, 0.3)';
+                this.ctx.lineWidth = 1;
+                
+                for (let i = 0; i < this.canvas.width; i += 50) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(i, 0);
+                    this.ctx.lineTo(i, this.canvas.height);
+                    this.ctx.stroke();
+                }
+                
+                for (let i = 0; i < this.canvas.height; i += 50) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, i);
+                    this.ctx.lineTo(this.canvas.width, i);
+                    this.ctx.stroke();
+                }
+                
+                // Garden title
+                this.ctx.fillStyle = '#2E7D32';
+                this.ctx.font = 'bold 24px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('🌻 Your Garden 🌻', this.canvas.width / 2, 40);
+            }
+            
+            drawPlants() {
+                this.player.plants.forEach((plant, index) => {
+                    const x = 100 + (index % 6) * 120;
+                    const y = 100 + Math.floor(index / 6) * 120;
+                    
+                    // Draw plant pot
+                    this.ctx.fillStyle = '#8D6E63';
+                    this.ctx.fillRect(x - 25, y + 15, 50, 25);
+                    
+                    // Draw plant emoji
+                    this.ctx.font = '32px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText(plant.name.split(' ')[0], x, y);
+                    
+                    // Health indicator
+                    const healthColor = plant.health >= 80 ? '#4CAF50' : plant.health >= 50 ? '#FF9800' : '#F44336';
+                    this.ctx.fillStyle = healthColor;
+                    this.ctx.fillRect(x - 20, y - 40, (plant.health / 100) * 40, 4);
+                    
+                    // Rarity border
+                    const rarityColors = {
+                        common: '#81C784',
+                        uncommon: '#42A5F5',
+                        rare: '#AB47BC',
+                        epic: '#FF7043',
+                        legendary: '#FFD700'
+                    };
+                    
+                    this.ctx.strokeStyle = rarityColors[plant.rarity] || '#81C784';
+                    this.ctx.lineWidth = 3;
+                    this.ctx.strokeRect(x - 30, y - 45, 60, 70);
+                });
+            }
+            
+            drawCanvasUI() {
+                if (this.player.plants.length === 0) {
+                    this.ctx.fillStyle = '#666';
+                    this.ctx.font = '18px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText('Click "Explore for Plants" to start your garden!', this.canvas.width / 2, this.canvas.height / 2);
+                }
+            }
+        }
+
+        // Start the game when page loads
+        window.addEventListener('load', () => {
+            const game = new PlantEvolutionRPG();
+            console.log('🌱 Plant Evolution RPG loaded successfully!');
+        });
+    </script>
+</body>
+</html>
