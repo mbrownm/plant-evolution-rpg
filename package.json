@@ -1,0 +1,20 @@
+{
+  "name": "plant-evolution-rpg",
+  "version": "1.0.0",
+  "description": "A browser-based plant collecting and evolving RPG with multiplayer features",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "nodemon server/server.js"
+  },
+  "keywords": ["game", "rpg", "plants", "multiplayer", "browser"],
+  "author": "mbrownm",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.7.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}

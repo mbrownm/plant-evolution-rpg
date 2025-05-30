@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plant Evolution RPG</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="game-container">
+        <header>
+            <h1>🌱 Plant Evolution RPG</h1>
+            <div id="player-info">
+                <span id="player-name">Loading...</span>
+                <span id="plant-count">Plants: 0</span>
+            </div>
+        </header>
+        
+        <main>
+            <canvas id="game-canvas" width="800" height="600"></canvas>
+            
+            <div id="ui-panel">
+                <div id="inventory">
+                    <h3>My Plants 🪴</h3>
+                    <div id="plant-list"></div>
+                </div>
+                
+                <div id="actions">
+                    <button id="explore-btn">🔍 Explore for Plants</button>
+                    <button id="care-btn">💧 Care for Plants</button>
+                    <button id="trade-btn">🤝 Trade with Friends</button>
+                </div>
+                
+                <div id="multiplayer">
+                    <h3>Friends Online 👥</h3>
+                    <div id="friends-list"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/plants.js"></script>
+    <script src="js/multiplayer.js"></script>
+</body>
+</html>
